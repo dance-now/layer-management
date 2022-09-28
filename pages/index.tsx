@@ -15,59 +15,78 @@ import styles from "../styles/Home.module.css";
 import Papa from "papaparse";
 import Encoding from "encoding-japanese";
 
-const Home: NextPage = () => {
+const Home: NextPage = ({ instructor }) => {
   const japanStandardTime = new Date().toLocaleString("ja-JP", {
     timeZone: "Asia/Tokyo",
   });
   const now = new Date(japanStandardTime);
-  const [month, setMonth] = useState<number>(now.getFullYear());
-  const [yaer, setYaer] = useState<number>(now.getHours() + 1);
+  const [month, setMonth] = useState<number | null>(7);
+  const [yaer, setYaer] = useState<number | null>(2022);
+  const [sales, setSales] = useState<number | null>(null);
+  const [lessonData, setLessonData] = useState<DocumentData[]>();
+  const [instructorData, setInstructorData] = useState<any>();
   const selectYear = [now.getFullYear(), now.getFullYear() + 1];
-  useEffect(() => {
-    // getLessons();
-  }, []);
-
-  const getPeriodLessons = () => {
-    const lessons = getLessons();
-  };
 
   const getLessons = async () => {
     const lessonList: DocumentData[] = [];
-    const userRef = getDocs(collection(db, "lessons"));
-    (await userRef).forEach((doc) => {
-      lessonList.push(doc.data());
+    const lessonsRef = getDocs(collection(db, "lessons"));
+    (await lessonsRef).forEach((doc) => {
+      const sales = doc.data()!.price * doc.data()!.users.length;
+      lessonList.push({ ...doc.data(), sales });
     });
     return lessonList;
   };
 
-  const getLessonPrice = async (lessons) => {
-    let price = 0;
-    await lessons.forEach(async (id) => {
-      const lessonDoc = doc(db, "lessons", id);
-      const lessonsSnapshot = await getDoc(lessonDoc);
-
-      return (
-        lessonsSnapshot.data()!.price * lessonsSnapshot.data()!.users.length
+  // 指定した年月で開催されたあったレッスン
+  const getPeriodLessons = async () => {
+    if (!month || !yaer) return;
+    const lessons = getLessons();
+    const periodLessons = (await lessons).filter((value) => {
+      const startDatetime = new Date(
+        value.start_datetime
+          .toDate()
+          .toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
       );
+
+      const isPeriodLesson =
+        startDatetime.getFullYear() === yaer &&
+        startDatetime.getMonth() + 1 === month;
+
+      isPeriodLesson && setSales(sales + value.sales);
+      return isPeriodLesson;
     });
 
-    console.log(price);
-    return price;
+    setLessonData(periodLessons);
+    formatHostLesson(periodLessons);
+  };
+
+  const formatHostLesson = (periodLessons) => {
+    const newInstructorList: { id: any; sales: any }[] = [];
+    instructor.forEach(async (value) => {
+      value.host_lessons.forEach((id) => {
+        periodLessons.map((lessonDoc) => {
+          return (
+            lessonDoc.id === id &&
+            newInstructorList.push({ id, sales: lessonDoc.sales, ...value })
+          );
+        });
+      });
+    });
+
+    setInstructorData(newInstructorList);
   };
 
   const getInstructorBankData = async () => {
     const instructorList: DocumentData[] = [];
-    const userRef = await getDocs(collection(db, "instructor"));
-    userRef.forEach(async (doc) => {
-      const price = await getLessonPrice(doc.data().host_lessons);
-      console.log("getInstructorBankData", price);
+
+    instructorData.forEach(async (value) => {
       instructorList.push([
         "2",
-        doc.data().bank.code,
-        doc.data().bank.brunch,
-        doc.data().bank.type,
-        doc.data().bank.number,
-        doc.data().bank.name,
+        value.bank.code,
+        value.bank.brunch,
+        value.bank.type,
+        value.bank.number,
+        value.bank.name,
         "送金金額",
         `00${instructorList.length + 1}`,
       ]);
@@ -87,7 +106,7 @@ const Home: NextPage = () => {
         "7787950",
       ],
       ...instructorList,
-      ["8", `${instructorList.length}`, "合計金額", "9"],
+      ["8", `${instructorList.length}`, String(sales), "9"],
     ];
   };
 
@@ -124,6 +143,7 @@ const Home: NextPage = () => {
           value={yaer}
           onChange={(e) => {
             setYaer(Number(e.target.value));
+            getPeriodLessons();
           }}
         >
           <option>年を選択</option>
@@ -137,6 +157,7 @@ const Home: NextPage = () => {
           value={month}
           onChange={(e) => {
             setMonth(Number(e.target.value));
+            getPeriodLessons();
           }}
         >
           <option>月を選択</option>
@@ -152,3 +173,16 @@ const Home: NextPage = () => {
 };
 
 export default Home;
+
+export const getStaticProps = async () => {
+  const instructor: DocumentData[] = [];
+  const instructorRef = await getDocs(collection(db, "instructor"));
+  instructorRef.forEach(async (doc) => {
+    if (!doc.exists) return;
+    instructor.push(doc.data());
+  });
+  return {
+    props: { instructor },
+    revalidate: 3,
+  };
+};
