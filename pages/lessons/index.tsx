@@ -3,12 +3,14 @@ import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
 
-const Home: NextPage = () => {
+const LessonsPage: NextPage = () => {
   return (
     <div className={styles.container}>
-      <main className={styles.main}>ログイン</main>
+      <main className={styles.main}>
+        <div>レッスン一覧</div>
+      </main>
     </div>
   );
 };
 
-export default Home;
+export default LessonsPage;
