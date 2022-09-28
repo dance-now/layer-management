@@ -42,7 +42,7 @@ const Home: NextPage = () => {
   const getInstructorBankData = async () => {
     const instructorList: DocumentData[] = [];
     const userRef = getDocs(collection(db, "instructor"));
-    (await userRef).forEach((doc, index) => {
+    (await userRef).forEach((doc:, index) => {
       instructorList.push([
         index + 1,
         doc.data().bank.code,

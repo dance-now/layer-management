@@ -10,6 +10,7 @@ import {
   DocumentData,
 } from "firebase/firestore";
 import styles from "../../styles/Home.module.css";
+import Link from "next/link";
 
 const Lesson: NextPage = () => {
   const japanStandardTime = new Date().toLocaleString("ja-JP", {
@@ -69,10 +70,14 @@ const Lesson: NextPage = () => {
           ))}
         </select>
         <ul>
-          {lessons.map((value) => {
-            const { title } = value;
+          {lessons.map((value: { title: any; id: any }) => {
+            const { title, id } = value;
             console.log(value);
-            return <li key={title}>{title}</li>;
+            return (
+              <li key={title}>
+                <Link href={`/lessons/${id}`}>{title}</Link>
+              </li>
+            );
           })}
         </ul>
       </main>
