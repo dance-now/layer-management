@@ -22,6 +22,9 @@ const LessonId: NextPage = ({ lesson }) => {
       updateDoc(doc(db, "lessons", lesson.id), {
         users: arrayRemove(uid),
       });
+      updateDoc(doc(db, "users", uid), {
+        purchased_lessons: arrayRemove(lesson.id),
+      });
       const deleteUsers = users.filter((id: string) => {
         return uid !== id;
       });
