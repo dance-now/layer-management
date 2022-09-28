@@ -5,15 +5,12 @@ import { db } from "../../../src/lib/firebase";
 import {
   collection,
   doc,
-  setDoc,
   getDocs,
-  DocumentData,
   getDoc,
   arrayRemove,
   updateDoc,
 } from "firebase/firestore";
 import styles from "../../../styles/Home.module.css";
-import Link from "next/link";
 
 const LessonId: NextPage = ({ lesson }) => {
   const [users, setUsers] = useState(lesson.users);
@@ -29,6 +26,10 @@ const LessonId: NextPage = ({ lesson }) => {
         return uid !== id;
       });
       setUsers(deleteUsers);
+
+      //purchasesからをstatusをcancelに
+
+      // stripeで削除
     } else {
       return;
     }

@@ -9,6 +9,7 @@ import {
   setDoc,
   getDocs,
   DocumentData,
+  getDoc,
 } from "firebase/firestore";
 import styles from "../styles/Home.module.css";
 import Papa from "papaparse";
@@ -39,21 +40,55 @@ const Home: NextPage = () => {
     return lessonList;
   };
 
+  const getLessonPrice = async (lessons) => {
+    let price = 0;
+    await lessons.forEach(async (id) => {
+      const lessonDoc = doc(db, "lessons", id);
+      const lessonsSnapshot = await getDoc(lessonDoc);
+
+      return (
+        lessonsSnapshot.data()!.price * lessonsSnapshot.data()!.users.length
+      );
+    });
+
+    console.log(price);
+    return price;
+  };
+
   const getInstructorBankData = async () => {
     const instructorList: DocumentData[] = [];
-    const userRef = getDocs(collection(db, "instructor"));
-    (await userRef).forEach((doc:, index) => {
+    const userRef = await getDocs(collection(db, "instructor"));
+    userRef.forEach(async (doc) => {
+      const price = await getLessonPrice(doc.data().host_lessons);
+      console.log("getInstructorBankData", price);
       instructorList.push([
-        index + 1,
+        "2",
         doc.data().bank.code,
         doc.data().bank.brunch,
         doc.data().bank.type,
         doc.data().bank.number,
         doc.data().bank.name,
-        `00${index + 1}`,
+        "送金金額",
+        `00${instructorList.length + 1}`,
       ]);
     });
-    return instructorList;
+
+    return [
+      [
+        "1",
+        "21",
+        "0",
+        "0100303570",
+        "ｶﾌﾞｼｷｶﾞｲｼｬﾀﾞﾝｽﾅｳ",
+        "0930",
+        "0036",
+        "251",
+        "1",
+        "7787950",
+      ],
+      ...instructorList,
+      ["8", `${instructorList.length}`, "合計金額", "9"],
+    ];
   };
 
   const csvExport = async () => {
