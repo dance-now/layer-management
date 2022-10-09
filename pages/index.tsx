@@ -1,16 +1,8 @@
 import type { NextPage } from "next";
-import Head from "next/head";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+
+import { useState } from "react";
 import { db } from "../src/lib/firebase";
-import {
-  collection,
-  doc,
-  setDoc,
-  getDocs,
-  DocumentData,
-  getDoc,
-} from "firebase/firestore";
+import { collection, getDocs, DocumentData } from "firebase/firestore";
 import styles from "../styles/Home.module.css";
 import Papa from "papaparse";
 import Encoding from "encoding-japanese";

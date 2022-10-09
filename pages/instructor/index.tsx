@@ -1,17 +1,9 @@
 import type { NextPage } from "next";
-import Head from "next/head";
-import Image from "next/image";
+
 import { useEffect, useState } from "react";
 import { db } from "../../src/lib/firebase";
-import {
-  collection,
-  doc,
-  setDoc,
-  getDocs,
-  DocumentData,
-  getDoc,
-} from "firebase/firestore";
-import styles from "../styles/Home.module.css";
+import { collection, getDocs, DocumentData } from "firebase/firestore";
+import styles from "../../styles/Home.module.css";
 import Papa from "papaparse";
 import Encoding from "encoding-japanese";
 
@@ -198,6 +190,12 @@ const Instructor: NextPage<any> = ({ instructor }) => {
             </option>
           ))}
         </select>
+
+        <ul>
+          {instructor.map((value) => {
+            return <li key={value.user_name}>{value.user_name}</li>;
+          })}
+        </ul>
       </main>
     </div>
   );
@@ -206,14 +204,16 @@ const Instructor: NextPage<any> = ({ instructor }) => {
 export default Instructor;
 
 export const getStaticProps = async () => {
-  const instructor: DocumentData[] = [];
+  const instructorList: DocumentData[] = [];
   const instructorRef = await getDocs(collection(db, "instructors"));
   instructorRef.forEach(async (doc) => {
+    console.log(doc.data());
     if (!doc.exists) return;
-    instructor.push(doc.data());
+    const instructor = JSON.parse(JSON.stringify(doc.data()));
+    instructorList.push(instructor);
   });
   return {
-    props: { instructor },
+    props: { instructor: instructorList },
     revalidate: 3,
   };
 };
