@@ -15,18 +15,19 @@ import styles from "../styles/Home.module.css";
 import Papa from "papaparse";
 import Encoding from "encoding-japanese";
 
-const Home: NextPage = ({ instructor }) => {
+const Home: NextPage<any> = ({}) => {
   const japanStandardTime = new Date().toLocaleString("ja-JP", {
     timeZone: "Asia/Tokyo",
   });
   const now = new Date(japanStandardTime);
-  const [month, setMonth] = useState<number | null>(7);
-  const [yaer, setYaer] = useState<number | null>(2022);
-  const [sales, setSales] = useState<number | null>(null);
+  const [month, setMonth] = useState<number>(7);
+  const [yaer, setYaer] = useState<number>(2022);
+  const [totalSales, setTotalSales] = useState<number | null>(null);
   const [lessonData, setLessonData] = useState<DocumentData[]>();
   const [instructorData, setInstructorData] = useState<any>();
   const selectYear = [now.getFullYear(), now.getFullYear() + 1];
 
+  // レッスンの売上とレッスン情報を取得
   const getLessons = async () => {
     const lessonList: DocumentData[] = [];
     const lessonsRef = getDocs(collection(db, "lessons"));
@@ -50,9 +51,9 @@ const Home: NextPage = ({ instructor }) => {
 
       const isPeriodLesson =
         startDatetime.getFullYear() === yaer &&
-        startDatetime.getMonth() + 1 === month;
+        startDatetime.getMonth() === month;
 
-      isPeriodLesson && setSales(sales + value.sales);
+      isPeriodLesson && setTotalSales(totalSales + value.sales);
       return isPeriodLesson;
     });
 
@@ -60,18 +61,45 @@ const Home: NextPage = ({ instructor }) => {
     formatHostLesson(periodLessons);
   };
 
-  const formatHostLesson = (periodLessons) => {
-    const newInstructorList: { id: any; sales: any }[] = [];
-    instructor.forEach(async (value) => {
-      value.host_lessons.forEach((id) => {
-        periodLessons.map((lessonDoc) => {
-          return (
-            lessonDoc.id === id &&
-            newInstructorList.push({ id, sales: lessonDoc.sales, ...value })
-          );
+  // その月でおこなれたレッスンを開催しているインストラクターのデータ
+  const formatHostLesson = (periodLessons: any[]) => {
+    const newInstructorList: { instructorId: any; sales: any }[] = [];
+    // 仮
+    const instructorDemo = [
+      {
+        id: "FwVMsDYQ5cY4bxG4LH7xt9N96Mr2",
+        host_lessons: ["0pdbO7XwHG59T0kVFah6"],
+      },
+      {
+        id: "8J9g5RK7ZJV9kavYxXtwg5lRCu33",
+        host_lessons: [
+          "3PZlX38Twz04QFEtZ5lE",
+          "6eupDsFkJccvAJUASFYz",
+          "7FaZqZzfDovePziLG1lE",
+        ],
+      },
+    ];
+    instructorDemo.forEach(
+      async (value: { host_lessons?: string[]; id?: string }) => {
+        if (value.host_lessons === undefined) return;
+        value.host_lessons.map((id: string, index) => {
+          let instructorSales = 0;
+          periodLessons.map((lessonDoc: { id: string; sales: number }) => {
+            instructorSales = instructorSales + lessonDoc.sales;
+            if (index === value.host_lessons!.length - 1) {
+              return (
+                lessonDoc.id === id &&
+                newInstructorList.push({
+                  instructorId: id,
+                  sales: instructorSales,
+                  ...value,
+                })
+              );
+            }
+          });
         });
-      });
-    });
+      }
+    );
 
     setInstructorData(newInstructorList);
   };
@@ -79,18 +107,22 @@ const Home: NextPage = ({ instructor }) => {
   const getInstructorBankData = async () => {
     const instructorList: DocumentData[] = [];
 
-    instructorData.forEach(async (value) => {
-      instructorList.push([
-        "2",
-        value.bank.code,
-        value.bank.brunch,
-        value.bank.type,
-        value.bank.number,
-        value.bank.name,
-        "送金金額",
-        `00${instructorList.length + 1}`,
-      ]);
-    });
+    instructorData.forEach(
+      async (value: {
+        bank: { code: any; brunch: any; type: any; number: any; name: any };
+      }) => {
+        instructorList.push([
+          "2",
+          value.bank.code,
+          value.bank.brunch,
+          value.bank.type,
+          value.bank.number,
+          value.bank.name,
+          "送金金額",
+          `00${instructorList.length + 1}`,
+        ]);
+      }
+    );
 
     return [
       [
@@ -106,7 +138,7 @@ const Home: NextPage = ({ instructor }) => {
         "7787950",
       ],
       ...instructorList,
-      ["8", `${instructorList.length}`, String(sales), "9"],
+      ["8", `${instructorList.length}`, String(totalSales), "9"],
     ];
   };
 
@@ -174,15 +206,15 @@ const Home: NextPage = ({ instructor }) => {
 
 export default Home;
 
-export const getStaticProps = async () => {
-  const instructor: DocumentData[] = [];
-  const instructorRef = await getDocs(collection(db, "instructor"));
-  instructorRef.forEach(async (doc) => {
-    if (!doc.exists) return;
-    instructor.push(doc.data());
-  });
-  return {
-    props: { instructor },
-    revalidate: 3,
-  };
-};
+// export const getStaticProps = async () => {
+//   const instructor: DocumentData[] = [];
+//   const instructorRef = await getDocs(collection(db, "instructors"));
+//   instructorRef.forEach(async (doc) => {
+//     if (!doc.exists) return;
+//     instructor.push(doc.data());
+//   });
+//   return {
+//     props: { instructor },
+//     revalidate: 3,
+//   };
+// };
