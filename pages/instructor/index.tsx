@@ -2,7 +2,13 @@ import type { NextPage } from "next";
 
 import { useEffect, useState } from "react";
 import { db } from "../../src/lib/firebase";
-import { collection, getDocs, DocumentData } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  DocumentData,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 import styles from "../../styles/Home.module.css";
 import Papa from "papaparse";
 import Encoding from "encoding-japanese";
@@ -24,7 +30,17 @@ const Instructor: NextPage<any> = ({ instructor }) => {
     const lessonList: DocumentData[] = [];
     const lessonsRef = getDocs(collection(db, "lessons"));
     (await lessonsRef).forEach((doc) => {
-      const sales = doc.data()!.price * doc.data()!.users.length;
+      // paypayなどで先に入金している
+      const otherPaymentUsersLength =
+        doc.data().other_payment_users === undefined
+          ? 0
+          : doc.data().other_payment_users.length;
+      // 運営の人が入っている場合売上を引く
+      const testID = "";
+      const users = doc.data()!.users.includes(testID)
+        ? doc.data()!.users.length - otherPaymentUsersLength - 1
+        : doc.data()!.users.length - otherPaymentUsersLength;
+      const sales = doc.data()!.price * users;
       lessonList.push({ ...doc.data(), sales });
     });
     return lessonList;
@@ -34,6 +50,7 @@ const Instructor: NextPage<any> = ({ instructor }) => {
   const getPeriodLessons = async () => {
     if (!month || !yaer) return;
     const lessons = getLessons();
+    let periodLessonsSales = 0;
     const periodLessons = (await lessons).filter((value) => {
       const startDatetime = new Date(
         value.start_datetime
@@ -44,11 +61,11 @@ const Instructor: NextPage<any> = ({ instructor }) => {
       const isPeriodLesson =
         startDatetime.getFullYear() === yaer &&
         startDatetime.getMonth() === month;
-
-      isPeriodLesson && setTotalSales(totalSales + value.sales);
+      if (isPeriodLesson) periodLessonsSales = periodLessonsSales + value.sales;
       return isPeriodLesson;
     });
 
+    setTotalSales(periodLessonsSales);
     setLessonData(periodLessons);
     formatHostLesson(periodLessons);
   };
@@ -61,6 +78,16 @@ const Instructor: NextPage<any> = ({ instructor }) => {
       {
         id: "FwVMsDYQ5cY4bxG4LH7xt9N96Mr2",
         host_lessons: ["0pdbO7XwHG59T0kVFah6"],
+        account_name: "ｲﾏﾑﾗｼｮｳﾀﾛｳ",
+        account_number: "1234567",
+        address: "三重県四日市市浮橋",
+        approval_flg: false,
+        bank_branch_code: "011",
+        bank_code: "0001",
+        deposit_type: "2",
+        phone_number: "08069242688",
+        potal_code: "1670032",
+        user_name: "imamura",
       },
       {
         id: "8J9g5RK7ZJV9kavYxXtwg5lRCu33",
@@ -69,6 +96,16 @@ const Instructor: NextPage<any> = ({ instructor }) => {
           "6eupDsFkJccvAJUASFYz",
           "7FaZqZzfDovePziLG1lE",
         ],
+        account_name: "ｿﾗ ﾋﾛｾ",
+        account_number: "1234567",
+        address: "三重県四日市市浮橋",
+        approval_flg: false,
+        bank_branch_code: "012",
+        bank_code: "0002",
+        deposit_type: "1",
+        phone_number: "08069242688",
+        potal_code: "1670032",
+        user_name: "imamura",
       },
     ];
     instructorDemo.forEach(
@@ -83,7 +120,7 @@ const Instructor: NextPage<any> = ({ instructor }) => {
                 lessonDoc.id === id &&
                 newInstructorList.push({
                   instructorId: id,
-                  sales: instructorSales,
+                  sales: String(instructorSales),
                   ...value,
                 })
               );
@@ -101,16 +138,21 @@ const Instructor: NextPage<any> = ({ instructor }) => {
 
     instructorData.forEach(
       async (value: {
-        bank: { code: any; brunch: any; type: any; number: any; name: any };
+        account_name: any;
+        account_number: any;
+        bank_branch_code: any;
+        bank_code: any;
+        deposit_type: any;
+        sales: any;
       }) => {
         instructorList.push([
           "2",
-          value.bank.code,
-          value.bank.brunch,
-          value.bank.type,
-          value.bank.number,
-          value.bank.name,
-          "送金金額",
+          value.bank_code,
+          value.bank_branch_code,
+          value.deposit_type,
+          value.account_number,
+          value.account_name,
+          value.sales,
           `00${instructorList.length + 1}`,
         ]);
       }
@@ -158,6 +200,14 @@ const Instructor: NextPage<any> = ({ instructor }) => {
     link.click();
   };
 
+  const onChangeApprovalFlg = async (approval_flg: boolean, id: string) => {
+    const instructorRef = doc(db, "instructors", id);
+    await updateDoc(instructorRef, {
+      approval_flg: !approval_flg,
+    });
+    location.reload();
+  };
+
   return (
     <div className={styles.container}>
       <main className={styles.main}>
@@ -169,7 +219,7 @@ const Instructor: NextPage<any> = ({ instructor }) => {
             getPeriodLessons();
           }}
         >
-          <option>年を選択</option>
+          <option key={"default"}>年を選択</option>
           {selectYear.map((year) => (
             <option value={year} key={year}>
               {year}
@@ -191,11 +241,30 @@ const Instructor: NextPage<any> = ({ instructor }) => {
           ))}
         </select>
 
-        <ul>
-          {instructor.map((value) => {
-            return <li key={value.user_name}>{value.user_name}</li>;
-          })}
-        </ul>
+        <ol type="1">
+          {instructor.map(
+            (value: { user_name: any; approval_flg: any; id: any }) => {
+              const { user_name, approval_flg, id } = value;
+              const buttonContents = approval_flg
+                ? {
+                    text: "承認済み",
+                    event: () => onChangeApprovalFlg(approval_flg, id),
+                  }
+                : {
+                    text: "未承認",
+                    event: () => onChangeApprovalFlg(approval_flg, id),
+                  };
+              return (
+                <li key={id}>
+                  {user_name}
+                  <button onClick={buttonContents.event}>
+                    {buttonContents.text}
+                  </button>
+                </li>
+              );
+            }
+          )}
+        </ol>
       </main>
     </div>
   );
