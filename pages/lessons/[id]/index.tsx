@@ -12,9 +12,9 @@ import {
 } from "firebase/firestore";
 import styles from "../../../styles/Home.module.css";
 
-const LessonId: NextPage = ({ lesson }) => {
+const LessonId: NextPage = ({ lesson }: any) => {
   const [users, setUsers] = useState(lesson.users);
-  const lessonDelete = (uid) => {
+  const lessonDelete = (uid: any) => {
     if (window.confirm("本当に削除しますか？")) {
       updateDoc(doc(db, "lessons", lesson.id), {
         users: arrayRemove(uid),
@@ -40,7 +40,7 @@ const LessonId: NextPage = ({ lesson }) => {
       <main className={styles.main}>
         <h1>レッスン詳細</h1>
         <ul>
-          {users.map((value) => {
+          {users.map((value: any) => {
             return (
               <li
                 key={value}
