@@ -1,5 +1,5 @@
+import * as React from "react";
 import type { NextPage } from "next";
-
 import { useEffect, useState } from "react";
 import { db } from "../../src/lib/firebase";
 import {
@@ -9,11 +9,60 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
-import styles from "../../styles/Home.module.css";
 import Papa from "papaparse";
 import Encoding from "encoding-japanese";
+import Layout from "../../src/layouts/Layout";
+import Modal from "@mui/material/Modal";
+import { styled } from "@mui/material/styles";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell, { tableCellClasses } from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
 
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.common.black,
+    color: theme.palette.common.white,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  "&:nth-of-type(odd)": {
+    backgroundColor: theme.palette.action.hover,
+  },
+  // hide last border
+  "&:last-child td, &:last-child th": {
+    border: 0,
+  },
+}));
+
+const style = {
+  position: "absolute" as "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 8,
+};
 const Instructor: NextPage<any> = ({ instructor }) => {
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
   const japanStandardTime = new Date().toLocaleString("ja-JP", {
     timeZone: "Asia/Tokyo",
   });
@@ -201,72 +250,114 @@ const Instructor: NextPage<any> = ({ instructor }) => {
   };
 
   const onChangeApprovalFlg = async (approval_flg: boolean, id: string) => {
-    const instructorRef = doc(db, "instructors", id);
-    await updateDoc(instructorRef, {
-      approval_flg: !approval_flg,
-    });
-    location.reload();
+    if (window.confirm("承認しますか")) {
+      const instructorRef = doc(db, "instructors", id);
+      await updateDoc(instructorRef, {
+        approval_flg: !approval_flg,
+      });
+      location.reload();
+    }
   };
 
   return (
-    <div className={styles.container}>
-      <main className={styles.main}>
-        <button onClick={csvExport}>全銀データエクスポート</button>
-        <select
-          value={yaer}
-          onChange={(e) => {
-            setYaer(Number(e.target.value));
-            getPeriodLessons();
-          }}
-        >
-          <option key={"default"}>年を選択</option>
-          {selectYear.map((year) => (
-            <option value={year} key={year}>
-              {year}
-            </option>
-          ))}
-        </select>
-        <select
-          value={month}
-          onChange={(e) => {
-            setMonth(Number(e.target.value));
-            getPeriodLessons();
-          }}
-        >
-          <option>月を選択</option>
-          {[...Array(12)].map((_, index) => (
-            <option value={index + 1} key={index}>
-              {index + 1}
-            </option>
-          ))}
-        </select>
+    <Layout
+      header="インストラクター一覧"
+      headerLeftContents={
+        <Button variant="contained" onClick={handleOpen}>
+          全銀データExport
+        </Button>
+      }
+    >
+      <TableContainer component={Paper}>
+        <Table sx={{ minWidth: 700 }} aria-label="customized table">
+          <TableHead>
+            <TableRow>
+              <StyledTableCell>インストラクター名</StyledTableCell>
+              <StyledTableCell align="right">承認</StyledTableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {instructor.map(
+              (value: { user_name: any; approval_flg: any; id: any }) => {
+                const { user_name, approval_flg, id } = value;
+                const buttonContents = approval_flg
+                  ? {
+                      text: "承認済み",
+                      event: () => onChangeApprovalFlg(approval_flg, id),
+                    }
+                  : {
+                      text: "未承認",
+                      event: () => onChangeApprovalFlg(approval_flg, id),
+                    };
+                return (
+                  <StyledTableRow key={user_name}>
+                    <StyledTableCell component="th" scope="row">
+                      {user_name}
+                    </StyledTableCell>
 
-        <ol type="1">
-          {instructor.map(
-            (value: { user_name: any; approval_flg: any; id: any }) => {
-              const { user_name, approval_flg, id } = value;
-              const buttonContents = approval_flg
-                ? {
-                    text: "承認済み",
-                    event: () => onChangeApprovalFlg(approval_flg, id),
-                  }
-                : {
-                    text: "未承認",
-                    event: () => onChangeApprovalFlg(approval_flg, id),
-                  };
-              return (
-                <li key={id}>
-                  {user_name}
-                  <button onClick={buttonContents.event}>
-                    {buttonContents.text}
-                  </button>
-                </li>
-              );
-            }
-          )}
-        </ol>
-      </main>
-    </div>
+                    <StyledTableCell align="right">
+                      <Button>{buttonContents.text}</Button>
+                    </StyledTableCell>
+                  </StyledTableRow>
+                );
+              }
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <FormControl margin="normal" fullWidth>
+            <InputLabel id="demo-simple-select-label">年を選択</InputLabel>
+            <Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              value={yaer}
+              label="yaer"
+              onChange={(e) => {
+                setYaer(Number(e.target.value));
+                getPeriodLessons();
+              }}
+            >
+              {selectYear.map((year) => (
+                <MenuItem value={year} key={year}>
+                  {year}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl margin="normal" fullWidth>
+            <InputLabel id="demo-simple-select-label">月を選択</InputLabel>
+            <Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              value={month}
+              label="Age"
+              onChange={(e) => {
+                setMonth(Number(e.target.value));
+                getPeriodLessons();
+              }}
+            >
+              {[...Array(12)].map((_, index) => (
+                <MenuItem value={index + 1} key={index}>
+                  {index + 1}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Button fullWidth variant="contained" onClick={csvExport}>
+            CSV Download
+          </Button>
+        </Box>
+      </Modal>
+    </Layout>
   );
 };
 

@@ -10,10 +10,46 @@ import {
   arrayRemove,
   updateDoc,
 } from "firebase/firestore";
-import styles from "../../../styles/Home.module.css";
+import Chip from "@mui/material/Chip";
+import Link from "next/link";
+import { styled } from "@mui/material/styles";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell, { tableCellClasses } from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Layout from "../../../src/layouts/Layout";
+import Paper from "@mui/material/Paper";
+import Button from "@mui/material/Button";
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.common.black,
+    color: theme.palette.common.white,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  "&:nth-of-type(odd)": {
+    backgroundColor: theme.palette.action.hover,
+  },
+  // hide last border
+  "&:last-child td, &:last-child th": {
+    border: 0,
+  },
+}));
 
 const LessonId: NextPage = ({ lesson }: any) => {
   const [users, setUsers] = useState(lesson.users);
+
+  useEffect(() => {
+    lesson.users.map((id: string) => {});
+  }, []);
+
   const lessonDelete = (uid: any) => {
     if (window.confirm("本当に削除しますか？")) {
       updateDoc(doc(db, "lessons", lesson.id), {
@@ -26,7 +62,6 @@ const LessonId: NextPage = ({ lesson }: any) => {
         return uid !== id;
       });
       setUsers(deleteUsers);
-
       //purchasesからをstatusをcancelに
 
       // stripeで削除
@@ -36,29 +71,32 @@ const LessonId: NextPage = ({ lesson }: any) => {
   };
 
   return (
-    <div className={styles.container}>
-      <main className={styles.main}>
-        <h1>レッスン詳細</h1>
-        <ul>
-          {users.map((value: any) => {
-            return (
-              <li
-                key={value}
-                style={{
-                  display: "flex",
-                  margin: 16,
-                  padding: 4,
-                  border: "1px solid black",
-                }}
-              >
-                <div>{value}</div>
-                <button onClick={() => lessonDelete(value)}>削除</button>
-              </li>
-            );
-          })}
-        </ul>
-      </main>
-    </div>
+    <Layout header={`レッスン一覧 / ${lesson.title}`}>
+      <TableContainer component={Paper}>
+        <Table sx={{ minWidth: 700 }} aria-label="customized table">
+          <TableHead>
+            <TableRow>
+              <StyledTableCell>ID</StyledTableCell>
+              <StyledTableCell align="right">詳削除細</StyledTableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {users.map((value: string) => {
+              return (
+                <StyledTableRow key={value}>
+                  <StyledTableCell component="th" scope="row">
+                    {value}
+                  </StyledTableCell>
+                  <StyledTableCell align="right">
+                    <Button onClick={() => lessonDelete(value)}>削除</Button>
+                  </StyledTableCell>
+                </StyledTableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Layout>
   );
 };
 
@@ -95,7 +133,6 @@ export const getStaticPaths: GetStaticPaths = async () => {
     });
     return { paths, fallback: "blocking" };
   } catch (error) {
-    console.log(error);
     return { paths: [], fallback: "blocking" };
   }
 };

@@ -14,7 +14,7 @@ export const UserContext = createContext<User>({
 });
 
 export const UserContextProvider = ({ children }: any) => {
-  const [user, setUser]: [any, any] = useState();
+  const [user, setUser]: [any, any] = useState(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   useEffect(() => {
@@ -27,7 +27,7 @@ export const UserContextProvider = ({ children }: any) => {
         // ログインされてない
         setUser("");
         setLoading(true);
-        router.push("/");
+        router.push("/login");
       }
     });
   }, []);
