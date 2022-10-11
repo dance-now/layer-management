@@ -74,6 +74,14 @@ const Instructor: NextPage<any> = ({ instructor }) => {
   const [instructorData, setInstructorData] = useState<any>();
   const selectYear = [now.getFullYear(), now.getFullYear() + 1];
 
+  useEffect(() => {
+    instructor.map((value: any) => {
+      console.log(value);
+      // const userDoc = doc(db, "users", value.id);
+      // console.log(userDoc);
+    });
+  }, []);
+
   // レッスンの売上とレッスン情報を取得
   const getLessons = async () => {
     const lessonList: DocumentData[] = [];
@@ -367,7 +375,6 @@ export const getStaticProps = async () => {
   const instructorList: DocumentData[] = [];
   const instructorRef = await getDocs(collection(db, "instructors"));
   instructorRef.forEach(async (doc) => {
-    console.log(doc.data());
     if (!doc.exists) return;
     const instructor = JSON.parse(JSON.stringify(doc.data()));
     instructorList.push(instructor);

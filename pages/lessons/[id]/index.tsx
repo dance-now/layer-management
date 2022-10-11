@@ -48,16 +48,16 @@ const LessonId: NextPage = ({ lesson, purchases }: any) => {
   console.log(purchases);
   const lessonDelete = (uid: any) => {
     if (window.confirm("本当に削除しますか？")) {
-      // updateDoc(doc(db, "lessons", lesson.id), {
-      //   users: arrayRemove(uid),
-      // });
-      // updateDoc(doc(db, "users", uid), {
-      //   purchased_lessons: arrayRemove(lesson.id),
-      // });
-      // const deleteUsers = users.filter((id: string) => {
-      //   return uid !== id;
-      // });
-      // setUsers(deleteUsers);
+      updateDoc(doc(db, "lessons", lesson.id), {
+        users: arrayRemove(uid),
+      });
+      updateDoc(doc(db, "users", uid), {
+        purchased_lessons: arrayRemove(lesson.id),
+      });
+      const deleteUsers = users.filter((id: string) => {
+        return uid !== id;
+      });
+      setUsers(deleteUsers);
 
       //purchasesからをstatusをcancelに
       purchases.map((value: any) => {
