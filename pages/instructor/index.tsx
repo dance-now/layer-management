@@ -77,6 +77,7 @@ const Instructor: NextPage<any> = ({ instructor }) => {
   useEffect(() => {
     instructor.map((value: any) => {
       console.log(value);
+      //インストラクターのレッスン取得準備
       // const userDoc = doc(db, "users", value.id);
       // console.log(userDoc);
     });
