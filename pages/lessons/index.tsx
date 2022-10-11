@@ -72,8 +72,8 @@ const Lesson: NextPage = () => {
 
   const getLessons = async () => {
     const lessonList: DocumentData[] = [];
-    const userRef = getDocs(collection(db, "lessons"));
-    (await userRef).forEach((doc) => {
+    const lessonsRef = getDocs(collection(db, "lessons"));
+    (await lessonsRef).forEach((doc) => {
       lessonList.push(doc.data());
     });
     setLessons(lessonList);

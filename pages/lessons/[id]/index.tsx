@@ -43,26 +43,28 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-const LessonId: NextPage = ({ lesson }: any) => {
+const LessonId: NextPage = ({ lesson, purchases }: any) => {
   const [users, setUsers] = useState(lesson.users);
-
-  useEffect(() => {
-    lesson.users.map((id: string) => {});
-  }, []);
-
+  console.log(purchases);
   const lessonDelete = (uid: any) => {
     if (window.confirm("本当に削除しますか？")) {
-      updateDoc(doc(db, "lessons", lesson.id), {
-        users: arrayRemove(uid),
-      });
-      updateDoc(doc(db, "users", uid), {
-        purchased_lessons: arrayRemove(lesson.id),
-      });
-      const deleteUsers = users.filter((id: string) => {
-        return uid !== id;
-      });
-      setUsers(deleteUsers);
+      // updateDoc(doc(db, "lessons", lesson.id), {
+      //   users: arrayRemove(uid),
+      // });
+      // updateDoc(doc(db, "users", uid), {
+      //   purchased_lessons: arrayRemove(lesson.id),
+      // });
+      // const deleteUsers = users.filter((id: string) => {
+      //   return uid !== id;
+      // });
+      // setUsers(deleteUsers);
+
       //purchasesからをstatusをcancelに
+      purchases.map((value: any) => {
+        if (value.uid === uid) {
+          console.log(value);
+        }
+      });
 
       // stripeで削除
     } else {
@@ -103,13 +105,21 @@ const LessonId: NextPage = ({ lesson }: any) => {
 export default LessonId;
 
 export const getStaticProps = async ({ params }: any) => {
-  const id = params.id as string;
-  const lessonDoc = doc(db, "lessons", id);
+  const lessonId = params.id as string;
+  const lessonDoc = doc(db, "lessons", lessonId);
+  const purchasesList: any = [];
   const lessonsSnapshot = await getDoc(lessonDoc);
+
   const lesson = JSON.parse(JSON.stringify(lessonsSnapshot.data()));
 
+  const purchasesRef = getDocs(collection(db, "purchases"));
+  (await purchasesRef).forEach((doc) => {
+    const id = doc.id;
+    doc.data().lesson_id == lessonId &&
+      purchasesList.push(JSON.parse(JSON.stringify({ ...doc.data(), id })));
+  });
   return {
-    props: { lesson },
+    props: { lesson, purchases: purchasesList },
     revalidate: 3,
   };
 };
