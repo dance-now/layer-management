@@ -72,18 +72,31 @@ const Instructor: NextPage<any> = ({ instructor }) => {
   const [totalSales, setTotalSales] = useState<number | null>(null);
   const [lessonData, setLessonData] = useState<DocumentData[]>();
   const [instructorData, setInstructorData] = useState<any>();
+  const [othercPaymentCount, setOthercPaymentCount] = useState<any>();
   const selectYear = [now.getFullYear(), now.getFullYear() + 1];
 
   useEffect(() => {
     instructor.map((value: any) => {
-      console.log(value);
       //インストラクターのレッスン取得準備
       // const userDoc = doc(db, "users", value.id);
       // console.log(userDoc);
       // instructorDemoをこれに置き換える
       // setInstructorData([]);
     });
+    getOthercPaymentCount();
   }, []);
+
+  const getOthercPaymentCount = async () => {
+    const purchasesRef = getDocs(collection(db, "purchases"));
+    let count: any = {};
+    (await purchasesRef).forEach(function (doc) {
+      if (doc.data().status === "othercPayment") {
+        const id = doc.data().lesson_id;
+        count[id] = (count[id] || 0) + 1;
+      }
+    });
+    setOthercPaymentCount(count);
+  };
 
   // レッスンの売上とレッスン情報を取得
   const getLessons = async () => {
@@ -92,9 +105,9 @@ const Instructor: NextPage<any> = ({ instructor }) => {
     (await lessonsRef).forEach((doc) => {
       // paypayなどで先に入金している
       const otherPaymentUsersLength =
-        doc.data().other_payment_users === undefined
+        othercPaymentCount[doc.id] === undefined
           ? 0
-          : doc.data().other_payment_users.length;
+          : othercPaymentCount[doc.id];
       // 運営の人が入っている場合売上を引く
       const testID = "";
       const users = doc.data()!.users.includes(testID)

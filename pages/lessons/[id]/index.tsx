@@ -118,9 +118,7 @@ export const getStaticProps = async ({ params }: any) => {
   const lessonDoc = doc(db, "lessons", lessonId);
   const purchasesList: any = [];
   const lessonsSnapshot = await getDoc(lessonDoc);
-
   const lesson = JSON.parse(JSON.stringify(lessonsSnapshot.data()));
-
   const purchasesRef = getDocs(collection(db, "purchases"));
   (await purchasesRef).forEach((doc) => {
     const id = doc.id;
