@@ -22,6 +22,7 @@ import TableRow from "@mui/material/TableRow";
 import Layout from "../../../src/layouts/Layout";
 import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
+import { refundApi } from "../../../src/services/refundApi";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -43,9 +44,9 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-const LessonId: NextPage = ({ lesson, purchases }: any) => {
+const LessonId = ({ lesson, purchases }: any) => {
   const [users, setUsers] = useState(lesson.users);
-  console.log(purchases);
+
   const lessonDelete = (uid: any) => {
     if (window.confirm("本当に削除しますか？")) {
       updateDoc(doc(db, "lessons", lesson.id), {
@@ -58,17 +59,26 @@ const LessonId: NextPage = ({ lesson, purchases }: any) => {
         return uid !== id;
       });
       setUsers(deleteUsers);
-
-      //purchasesからをstatusをcancelに
+      // //purchasesからをstatusをcancelに
       purchases.map((value: any) => {
         if (value.uid === uid) {
-          console.log(value);
+          const purchasesDoc = doc(db, "purchases", value.id);
+          const cancel = () => {
+            updateDoc(purchasesDoc, {
+              status: "cancel",
+            });
+          };
+
+          if (value.status === "succeeded") {
+            const stripe_payment_intent_id = value.stripe_payment_intent_id;
+            cancel();
+            // stripeで削除
+            refundApi(stripe_payment_intent_id);
+          } else {
+            cancel();
+          }
         }
       });
-
-      // stripeで削除
-    } else {
-      return;
     }
   };
 
