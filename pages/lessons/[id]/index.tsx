@@ -1,6 +1,6 @@
-import type { GetStaticPaths, NextPage } from "next";
+import type { GetStaticPaths } from "next";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { db } from "../../../src/lib/firebase";
 import {
   collection,
@@ -10,8 +10,7 @@ import {
   arrayRemove,
   updateDoc,
 } from "firebase/firestore";
-import Chip from "@mui/material/Chip";
-import Link from "next/link";
+
 import { styled } from "@mui/material/styles";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";

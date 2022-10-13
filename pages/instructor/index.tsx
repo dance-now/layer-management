@@ -80,6 +80,8 @@ const Instructor: NextPage<any> = ({ instructor }) => {
       //インストラクターのレッスン取得準備
       // const userDoc = doc(db, "users", value.id);
       // console.log(userDoc);
+      // instructorDemoをこれに置き換える
+      // setInstructorData([]);
     });
   }, []);
 
@@ -375,9 +377,10 @@ export default Instructor;
 export const getStaticProps = async () => {
   const instructorList: DocumentData[] = [];
   const instructorRef = await getDocs(collection(db, "instructors"));
-  instructorRef.forEach(async (doc) => {
-    if (!doc.exists) return;
-    const instructor = JSON.parse(JSON.stringify(doc.data()));
+
+  instructorRef.forEach(async (value) => {
+    if (!value.exists) return;
+    const instructor = JSON.parse(JSON.stringify(value.data()));
     instructorList.push(instructor);
   });
   return {
