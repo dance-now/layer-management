@@ -46,7 +46,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 const LessonId = ({ lesson, purchases }: any) => {
   const [users, setUsers] = useState(lesson.users);
 
-  const lessonDelete = (uid: any) => {
+  const lessonDelete = (uid: string) => {
     if (window.confirm("本当に削除しますか？")) {
       updateDoc(doc(db, "lessons", lesson.id), {
         users: arrayRemove(uid),
@@ -92,14 +92,14 @@ const LessonId = ({ lesson, purchases }: any) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map((value: string) => {
+            {users.map((uid: string) => {
               return (
-                <StyledTableRow key={value}>
+                <StyledTableRow key={uid}>
                   <StyledTableCell component="th" scope="row">
-                    {value}
+                    {uid}
                   </StyledTableCell>
                   <StyledTableCell align="right">
-                    <Button onClick={() => lessonDelete(value)}>削除</Button>
+                    <Button onClick={() => lessonDelete(uid)}>削除</Button>
                   </StyledTableCell>
                 </StyledTableRow>
               );
