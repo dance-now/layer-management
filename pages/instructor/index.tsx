@@ -76,13 +76,7 @@ const Instructor: NextPage<any> = ({ instructor }) => {
   const selectYear = [now.getFullYear(), now.getFullYear() + 1];
 
   useEffect(() => {
-    instructor.map((value: any) => {
-      //インストラクターのレッスン取得準備
-      // const userDoc = doc(db, "users", value.id);
-      // console.log(userDoc);
-      // instructorDemoをこれに置き換える
-      // setInstructorData([]);
-    });
+    getInstructorLesson();
     getOthercPaymentCount();
   }, []);
 
@@ -96,6 +90,15 @@ const Instructor: NextPage<any> = ({ instructor }) => {
       }
     });
     setOthercPaymentCount(count);
+  };
+  const getInstructorLesson = async () => {
+    instructor.map((value: any) => {
+      //インストラクターのレッスン取得準備
+      // const userDoc = doc(db, "users", value.id);
+      // console.log(userDoc);
+      // instructorDemoをこれに置き換える
+      // setInstructorData([]);
+    });
   };
 
   // レッスンの売上とレッスン情報を取得
@@ -211,12 +214,12 @@ const Instructor: NextPage<any> = ({ instructor }) => {
 
     instructorData.forEach(
       async (value: {
-        account_name: any;
-        account_number: any;
-        bank_branch_code: any;
-        bank_code: any;
-        deposit_type: any;
-        sales: any;
+        account_name: string;
+        account_number: string;
+        bank_branch_code: string;
+        bank_code: string;
+        deposit_type: string;
+        sales: string;
       }) => {
         instructorList.push([
           "2",

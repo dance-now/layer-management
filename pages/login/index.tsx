@@ -1,12 +1,16 @@
 import type { NextPage } from "next";
 import { useEffect, useRef, useState } from "react";
-import { auth, db } from "../../src/lib/firebase";
-import { collection, getDocs, DocumentData } from "firebase/firestore";
+import { auth } from "../../src/lib/firebase";
 import styles from "../styles/Home.module.css";
 import Link from "next/link";
-import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import {
+  ConfirmationResult,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+} from "firebase/auth";
 import { useUserContext } from "../../src/contexts/UserContext";
 import Button from "@mui/material/Button";
+import { useForm } from "react-hook-form";
 
 declare global {
   interface Window {
@@ -14,14 +18,26 @@ declare global {
     recaptchaWidgetId: any;
   }
 }
+
 const Home: NextPage<any> = ({}) => {
   const { user } = useUserContext();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState<number>(0);
   const [code, setCode] = useState<string>("");
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const applicationVerifier = useRef<any>(null);
   const recaptchaWrapperRef = useRef<any>(null);
   const buttonText = step === 0 ? "認証番号送信" : "ログインする";
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      code: "",
+      phone: "",
+    },
+  });
+
   useEffect(() => {
     setupRecaptcha();
   }, []);
@@ -41,9 +57,10 @@ const Home: NextPage<any> = ({}) => {
     );
   };
 
-  const signup = () => {
-    signInWithPhoneNumber(auth, "+818083645815", applicationVerifier.current)
-      .then((confirmationResult) => {
+  const signup = (data: { phone: string }) => {
+    const phone = `+81${data.phone.slice(1)}`;
+    signInWithPhoneNumber(auth, phone, applicationVerifier.current)
+      .then((confirmationResult: ConfirmationResult) => {
         setConfirmationResult(confirmationResult);
         setStep(1);
       })
@@ -52,12 +69,11 @@ const Home: NextPage<any> = ({}) => {
       });
   };
 
-  const checkCode = () => {
+  const checkCode = (data: { code: string }) => {
     confirmationResult
-      .confirm(code)
+      .confirm(data.code)
       .then((result: any) => {
         const user = result.user;
-        console.log(user);
       })
       .catch((error: any) => {
         console.log(error);
@@ -82,18 +98,24 @@ const Home: NextPage<any> = ({}) => {
           <>
             <h1>ログイン</h1>
             <p>認証番号を入力</p>
-            <input
-              type="text"
-              onChange={(e) => setCode(e.target.value)}
-              name=""
-              id=""
-            />
-            <Button
-              variant="contained"
-              onClick={step === 0 ? signup : checkCode}
-            >
-              {buttonText}
-            </Button>
+            <form onSubmit={handleSubmit(step === 0 ? signup : checkCode)}>
+              {step === 0 ? (
+                <input
+                  type="tel"
+                  {...register("phone", {
+                    required: "Required",
+                  })}
+                />
+              ) : (
+                <input
+                  type="tel"
+                  {...register("code", {
+                    required: "Required",
+                  })}
+                />
+              )}
+              <Button variant="contained">{buttonText}</Button>
+            </form>
           </>
         )}
         <div ref={(ref) => (recaptchaWrapperRef.current = ref)}>
