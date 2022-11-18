@@ -7,7 +7,9 @@ import {
   getDocs,
   DocumentData,
   doc,
+  getDoc,
   updateDoc,
+  DocumentSnapshot,
 } from "firebase/firestore";
 import Papa from "papaparse";
 import Encoding from "encoding-japanese";
@@ -91,13 +93,22 @@ const Instructor: NextPage<any> = ({ instructor }) => {
     });
     setOthercPaymentCount(count);
   };
+
   const getInstructorLesson = async () => {
-    instructor.map((value: any) => {
+    instructor.map(async (value: any) => {
       //インストラクターのレッスン取得準備
-      // const userDoc = doc(db, "users", value.id);
-      // console.log(userDoc);
+      const userDoc = doc(db, "users", value.id);
+      const userData: DocumentSnapshot<DocumentData> = await getDoc(userDoc);
+      const lessonlist: any[] = [];
+      if (userData.exists()) return;
+      lessonlist.push({
+        ...value,
+        id: userData.data()!.id,
+        purchasedLessons: userData.data()!.purchased_lessons,
+      });
+
       // instructorDemoをこれに置き換える
-      // setInstructorData([]);
+      setInstructorData(lessonlist);
     });
   };
 
@@ -150,48 +161,48 @@ const Instructor: NextPage<any> = ({ instructor }) => {
   const formatHostLesson = (periodLessons: any[]) => {
     const newInstructorList: { instructorId: any; sales: any }[] = [];
     // 仮
-    const instructorDemo = [
-      {
-        id: "FwVMsDYQ5cY4bxG4LH7xt9N96Mr2",
-        host_lessons: ["0pdbO7XwHG59T0kVFah6"],
-        account_name: "ｲﾏﾑﾗｼｮｳﾀﾛｳ",
-        account_number: "1234567",
-        address: "三重県四日市市浮橋",
-        approval_flg: false,
-        bank_branch_code: "011",
-        bank_code: "0001",
-        deposit_type: "2",
-        phone_number: "08069242688",
-        potal_code: "1670032",
-        user_name: "imamura",
-      },
-      {
-        id: "8J9g5RK7ZJV9kavYxXtwg5lRCu33",
-        host_lessons: [
-          "3PZlX38Twz04QFEtZ5lE",
-          "6eupDsFkJccvAJUASFYz",
-          "7FaZqZzfDovePziLG1lE",
-        ],
-        account_name: "ｿﾗ ﾋﾛｾ",
-        account_number: "1234567",
-        address: "三重県四日市市浮橋",
-        approval_flg: false,
-        bank_branch_code: "012",
-        bank_code: "0002",
-        deposit_type: "1",
-        phone_number: "08069242688",
-        potal_code: "1670032",
-        user_name: "imamura",
-      },
-    ];
-    instructorDemo.forEach(
-      async (value: { host_lessons?: string[]; id?: string }) => {
-        if (value.host_lessons === undefined) return;
-        value.host_lessons.map((id: string, index) => {
+    // const instructorDemo = [
+    //   {
+    //     id: "FwVMsDYQ5cY4bxG4LH7xt9N96Mr2",
+    //     host_lessons: ["0pdbO7XwHG59T0kVFah6"],
+    //     account_name: "ｲﾏﾑﾗｼｮｳﾀﾛｳ",
+    //     account_number: "1234567",
+    //     address: "三重県四日市市浮橋",
+    //     approval_flg: false,
+    //     bank_branch_code: "011",
+    //     bank_code: "0001",
+    //     deposit_type: "2",
+    //     phone_number: "08069242688",
+    //     potal_code: "1670032",
+    //     user_name: "imamura",
+    //   },
+    //   {
+    //     id: "8J9g5RK7ZJV9kavYxXtwg5lRCu33",
+    //     host_lessons: [
+    //       "3PZlX38Twz04QFEtZ5lE",
+    //       "6eupDsFkJccvAJUASFYz",
+    //       "7FaZqZzfDovePziLG1lE",
+    //     ],
+    //     account_name: "ｿﾗ ﾋﾛｾ",
+    //     account_number: "1234567",
+    //     address: "三重県四日市市浮橋",
+    //     approval_flg: false,
+    //     bank_branch_code: "012",
+    //     bank_code: "0002",
+    //     deposit_type: "1",
+    //     phone_number: "08069242688",
+    //     potal_code: "1670032",
+    //     user_name: "imamura",
+    //   },
+    // ];
+    instructorData.forEach(
+      async (value: { purchasedLessons?: string[]; id?: string }) => {
+        if (value.purchasedLessons === undefined) return;
+        value.purchasedLessons.map((id: string, index) => {
           let instructorSales = 0;
           periodLessons.map((lessonDoc: { id: string; sales: number }) => {
             instructorSales = instructorSales + lessonDoc.sales;
-            if (index === value.host_lessons!.length - 1) {
+            if (index === value.purchasedLessons!.length - 1) {
               return (
                 lessonDoc.id === id &&
                 newInstructorList.push({
