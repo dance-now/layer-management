@@ -121,11 +121,13 @@ const Instructor: NextPage<any> = ({ instructor }) => {
         othercPaymentCount[doc.id] === undefined
           ? 0
           : othercPaymentCount[doc.id];
+
       // 運営の人が入っている場合売上を引く
       const testID = "";
       const users = doc.data()!.users.includes(testID)
         ? doc.data()!.users.length - otherPaymentUsersLength - 1
         : doc.data()!.users.length - otherPaymentUsersLength;
+
       const sales = doc.data()!.price * users;
       lessonList.push({ ...doc.data(), sales });
     });
@@ -172,7 +174,6 @@ const Instructor: NextPage<any> = ({ instructor }) => {
           ) => {
             const hostLessonId = lessonDoc.instructor_uid === instructorId;
             if (hostLessonId) {
-              console.log(lessonDoc, lessonDoc.sales, lessonDoc.id);
               instructorSales = instructorSales + lessonDoc.sales;
             }
             if (index === periodLessons.length - 1) {
