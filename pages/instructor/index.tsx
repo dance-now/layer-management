@@ -80,13 +80,14 @@ const Instructor: NextPage<any> = ({ instructor }) => {
   useEffect(() => {
     getInstructorLesson();
     getOthercPaymentCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getOthercPaymentCount = async () => {
     const purchasesRef = getDocs(collection(db, "purchases"));
     let count: any = {};
     (await purchasesRef).forEach(function (doc) {
-      if (doc.data().status === "othercPayment") {
+      if (doc.data().status === "otherPayment") {
         const id = doc.data().lesson_id;
         count[id] = (count[id] || 0) + 1;
       }
@@ -95,21 +96,19 @@ const Instructor: NextPage<any> = ({ instructor }) => {
   };
 
   const getInstructorLesson = async () => {
-    instructor.map(async (value: any) => {
+    const instructorList: any[] = [];
+    instructor.forEach(async (value: any) => {
       //インストラクターのレッスン取得準備
       const userDoc = doc(db, "users", value.id);
       const userData: DocumentSnapshot<DocumentData> = await getDoc(userDoc);
-      const lessonlist: any[] = [];
-      if (userData.exists()) return;
-      lessonlist.push({
+
+      await instructorList.push({
         ...value,
-        id: userData.data()!.id,
         purchasedLessons: userData.data()!.purchased_lessons,
       });
-
-      // instructorDemoをこれに置き換える
-      setInstructorData(lessonlist);
     });
+
+    await setInstructorData(instructorList);
   };
 
   // レッスンの売上とレッスン情報を取得
@@ -133,91 +132,61 @@ const Instructor: NextPage<any> = ({ instructor }) => {
     return lessonList;
   };
 
-  // 指定した年月で開催されたあったレッスン
-  const getPeriodLessons = async () => {
-    if (!month || !yaer) return;
-    const lessons = getLessons();
+  const getPeriodLessons = async (yaer: number, month: number) => {
+    const lessons = await getLessons();
     let periodLessonsSales = 0;
     const periodLessons = (await lessons).filter((value) => {
       const startDatetime = new Date(
         value.start_datetime
           .toDate()
-          .toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+          .toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }, value.id)
       );
 
       const isPeriodLesson =
         startDatetime.getFullYear() === yaer &&
-        startDatetime.getMonth() === month;
+        startDatetime.getMonth() + 1 === month;
+
       if (isPeriodLesson) periodLessonsSales = periodLessonsSales + value.sales;
       return isPeriodLesson;
     });
 
-    setTotalSales(periodLessonsSales);
-    setLessonData(periodLessons);
-    formatHostLesson(periodLessons);
+    await setTotalSales(periodLessonsSales); // その月の銀行の支払い総額
+    await formatHostLesson(periodLessons); // その月でおこなれたレッスンを開催しているインストラクターのデータや支払額
   };
 
-  // その月でおこなれたレッスンを開催しているインストラクターのデータ
-  const formatHostLesson = (periodLessons: any[]) => {
-    const newInstructorList: { instructorId: any; sales: any }[] = [];
-    // 仮
-    // const instructorDemo = [
-    //   {
-    //     id: "FwVMsDYQ5cY4bxG4LH7xt9N96Mr2",
-    //     host_lessons: ["0pdbO7XwHG59T0kVFah6"],
-    //     account_name: "ｲﾏﾑﾗｼｮｳﾀﾛｳ",
-    //     account_number: "1234567",
-    //     address: "三重県四日市市浮橋",
-    //     approval_flg: false,
-    //     bank_branch_code: "011",
-    //     bank_code: "0001",
-    //     deposit_type: "2",
-    //     phone_number: "08069242688",
-    //     potal_code: "1670032",
-    //     user_name: "imamura",
-    //   },
-    //   {
-    //     id: "8J9g5RK7ZJV9kavYxXtwg5lRCu33",
-    //     host_lessons: [
-    //       "3PZlX38Twz04QFEtZ5lE",
-    //       "6eupDsFkJccvAJUASFYz",
-    //       "7FaZqZzfDovePziLG1lE",
-    //     ],
-    //     account_name: "ｿﾗ ﾋﾛｾ",
-    //     account_number: "1234567",
-    //     address: "三重県四日市市浮橋",
-    //     approval_flg: false,
-    //     bank_branch_code: "012",
-    //     bank_code: "0002",
-    //     deposit_type: "1",
-    //     phone_number: "08069242688",
-    //     potal_code: "1670032",
-    //     user_name: "imamura",
-    //   },
-    // ];
-    instructorData.forEach(
+  const formatHostLesson = async (periodLessons: any[]) => {
+    const newInstructorList: { sales: any }[] = [];
+
+    await instructorData.forEach(
       async (value: { purchasedLessons?: string[]; id?: string }) => {
-        if (value.purchasedLessons === undefined) return;
-        value.purchasedLessons.map((id: string, index) => {
-          let instructorSales = 0;
-          periodLessons.map((lessonDoc: { id: string; sales: number }) => {
-            instructorSales = instructorSales + lessonDoc.sales;
-            if (index === value.purchasedLessons!.length - 1) {
-              return (
-                lessonDoc.id === id &&
-                newInstructorList.push({
-                  instructorId: id,
-                  sales: String(instructorSales),
-                  ...value,
-                })
-              );
+        const instructorId = value.id;
+        let instructorSales = 0;
+        periodLessons.map(
+          (
+            lessonDoc: {
+              id: string;
+              sales: number;
+              instructor_uid: string;
+            },
+            index
+          ) => {
+            const hostLessonId = lessonDoc.instructor_uid === instructorId;
+            if (hostLessonId) {
+              console.log(lessonDoc, lessonDoc.sales, lessonDoc.id);
+              instructorSales = instructorSales + lessonDoc.sales;
             }
-          });
-        });
+            if (index === periodLessons.length - 1) {
+              newInstructorList.push({
+                sales: String(instructorSales),
+                ...value,
+              });
+            }
+          }
+        );
       }
     );
 
-    setInstructorData(newInstructorList);
+    await setInstructorData(newInstructorList);
   };
 
   const getInstructorBankData = async () => {
@@ -359,7 +328,7 @@ const Instructor: NextPage<any> = ({ instructor }) => {
               label="yaer"
               onChange={(e) => {
                 setYaer(Number(e.target.value));
-                getPeriodLessons();
+                getPeriodLessons(Number(e.target.value), month);
               }}
             >
               {selectYear.map((year) => (
@@ -379,7 +348,7 @@ const Instructor: NextPage<any> = ({ instructor }) => {
               label="Age"
               onChange={(e) => {
                 setMonth(Number(e.target.value));
-                getPeriodLessons();
+                getPeriodLessons(yaer, Number(e.target.value));
               }}
             >
               {[...Array(12)].map((_, index) => (
