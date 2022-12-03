@@ -72,7 +72,6 @@ const Instructor: NextPage<any> = ({ instructor }) => {
   const [month, setMonth] = useState<number>(7);
   const [yaer, setYaer] = useState<number>(2022);
   const [totalSales, setTotalSales] = useState<number | null>(null);
-  const [lessonData, setLessonData] = useState<DocumentData[]>();
   const [instructorData, setInstructorData] = useState<any>();
   const [othercPaymentCount, setOthercPaymentCount] = useState<any>();
   const selectYear = [now.getFullYear(), now.getFullYear() + 1];
@@ -304,7 +303,9 @@ const Instructor: NextPage<any> = ({ instructor }) => {
                     </StyledTableCell>
 
                     <StyledTableCell align="right">
-                      <Button>{buttonContents.text}</Button>
+                      <Button onClick={buttonContents.event}>
+                        {buttonContents.text}
+                      </Button>
                     </StyledTableCell>
                   </StyledTableRow>
                 );
