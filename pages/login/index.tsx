@@ -1,7 +1,7 @@
 import type { NextPage } from "next";
 import { useEffect, useRef, useState } from "react";
 import { auth } from "../../src/lib/firebase";
-import styles from "../styles/Home.module.css";
+import styles from "../../styles/Home.module.css";
 import Link from "next/link";
 import {
   ConfirmationResult,
