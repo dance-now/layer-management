@@ -98,8 +98,9 @@ const Lesson: NextPage = () => {
                     .toDate()
                     .toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
                 );
+
                 const statusText =
-                  now.getTime() >= startDatetime.getTime() ? (
+                  now.getTime() <= startDatetime.getTime() ? (
                     <Chip label="開催前" />
                   ) : (
                     <Chip label="開催後" color="primary" />

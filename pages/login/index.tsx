@@ -11,6 +11,9 @@ import {
 import { useUserContext } from "../../src/contexts/UserContext";
 import Button from "@mui/material/Button";
 import { useForm } from "react-hook-form";
+import Box from "@mui/material/Box";
+import { TextField, Typography } from "@mui/material";
+import router from "next/router";
 
 declare global {
   interface Window {
@@ -26,7 +29,7 @@ const Home: NextPage<any> = ({}) => {
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const applicationVerifier = useRef<any>(null);
   const recaptchaWrapperRef = useRef<any>(null);
-  const buttonText = step === 0 ? "認証番号送信" : "ログインする";
+  const buttonText = step === 0 ? "認証番号を携帯に送信" : "ログインする";
   const {
     handleSubmit,
     register,
@@ -73,6 +76,7 @@ const Home: NextPage<any> = ({}) => {
     confirmationResult
       .confirm(data.code)
       .then((result: any) => {
+        router.push("/");
         const user = result.user;
       })
       .catch((error: any) => {
@@ -84,40 +88,55 @@ const Home: NextPage<any> = ({}) => {
   return (
     <div className={styles.container}>
       <main className={styles.main}>
-        {user ? (
-          <>
-            <h1>ログイン中</h1>
-            <Button variant="contained">
-              <Link href="/instructor">インストラクター</Link>
-            </Button>
-            <Button variant="contained">
-              <Link href="/lessons">レッスン</Link>
-            </Button>
-          </>
-        ) : (
-          <>
-            <h1>ログイン</h1>
-            <p>認証番号を入力</p>
-            <form onSubmit={handleSubmit(step === 0 ? signup : checkCode)}>
-              {step === 0 ? (
-                <input
-                  type="tel"
-                  {...register("phone", {
-                    required: "Required",
-                  })}
-                />
-              ) : (
-                <input
-                  type="tel"
-                  {...register("code", {
-                    required: "Required",
-                  })}
-                />
-              )}
-              <Button variant="contained">{buttonText}</Button>
-            </form>
-          </>
-        )}
+        <Box
+          sx={{
+            width: 500,
+            px: 15,
+            py: 8,
+            border: "1px solid grey",
+            margin: "auto",
+          }}
+        >
+          <Typography
+            variant="h1"
+            align="left"
+            sx={{ fontSize: 32, fontWeight: "bold" }}
+          >
+            ログイン
+          </Typography>
+          <Typography variant="subtitle1" mt={3}>
+            {step === 0 ? "電話番号" : "認証番号"}入力
+          </Typography>
+          <form>
+            {step === 0 ? (
+              <TextField
+                type="tel"
+                fullWidth
+                {...register("phone", {
+                  required: "Required",
+                })}
+              />
+            ) : (
+              <TextField
+                type="tel"
+                fullWidth
+                {...register("code", {
+                  required: "Required",
+                })}
+              />
+            )}
+            <Box margin={3}>
+              <Button
+                onClick={handleSubmit(step === 0 ? signup : checkCode)}
+                fullWidth
+                variant="contained"
+              >
+                {buttonText}
+              </Button>
+            </Box>
+          </form>
+        </Box>
+
         <div ref={(ref) => (recaptchaWrapperRef.current = ref)}>
           <div id="recaptcha-container"></div>
         </div>

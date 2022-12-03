@@ -18,6 +18,8 @@ import AccountBoxIcon from "@mui/icons-material/AccountBox";
 import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import router from "next/router";
+import { auth } from "../../lib/firebase";
+import { signOut } from "firebase/auth";
 
 interface LayoutProps {
   title?: string;
@@ -88,7 +90,7 @@ const Layout: React.FunctionComponent<LayoutProps> = ({
           <List>
             {["Logout"].map((text, index) => (
               <ListItem key={text} disablePadding>
-                <ListItemButton>
+                <ListItemButton onClick={() => auth.signOut()}>
                   <ListItemIcon>
                     <ExitToAppIcon />
                   </ListItemIcon>
@@ -98,6 +100,7 @@ const Layout: React.FunctionComponent<LayoutProps> = ({
             ))}
           </List>
         </Drawer>
+
         <Box
           component="main"
           sx={{ flexGrow: 1, bgcolor: "background.default", p: 3 }}
@@ -115,7 +118,6 @@ const Layout: React.FunctionComponent<LayoutProps> = ({
             <Typography variant="h5" fontWeight={700} component="h1">
               {header}
             </Typography>
-
             {headerLeftContents}
           </Box>
           <main>{children}</main>
