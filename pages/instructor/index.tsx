@@ -74,7 +74,11 @@ const Instructor: NextPage<any> = ({ instructor }) => {
   const [totalSales, setTotalSales] = useState<number | null>(null);
   const [instructorData, setInstructorData] = useState<any>();
   const [othercPaymentCount, setOthercPaymentCount] = useState<any>();
-  const selectYear = [now.getFullYear(), now.getFullYear() + 1];
+  const selectYear = [
+    now.getFullYear() - 1,
+    now.getFullYear(),
+    now.getFullYear() + 1,
+  ];
 
   useEffect(() => {
     getInstructorLesson();
@@ -100,11 +104,12 @@ const Instructor: NextPage<any> = ({ instructor }) => {
       //インストラクターのレッスン取得準備
       const userDoc = doc(db, "users", value.id);
       const userData: DocumentSnapshot<DocumentData> = await getDoc(userDoc);
-
-      await instructorList.push({
-        ...value,
-        purchasedLessons: userData.data()!.purchased_lessons,
-      });
+      if (userData.data() !== undefined) {
+        await instructorList.push({
+          ...value,
+          purchasedLessons: userData.data()!.purchased_lessons,
+        });
+      }
     });
 
     await setInstructorData(instructorList);
@@ -204,12 +209,20 @@ const Instructor: NextPage<any> = ({ instructor }) => {
         instructorList.push([
           "2",
           value.bank_code,
+          " ",
           value.bank_branch_code,
+          " ",
+          " ",
           value.deposit_type,
           value.account_number,
           value.account_name,
           value.sales,
+          "1",
           `00${instructorList.length + 1}`,
+          " ",
+          " ",
+          " ",
+          "",
         ]);
       }
     );
@@ -223,12 +236,16 @@ const Instructor: NextPage<any> = ({ instructor }) => {
         "ｶﾌﾞｼｷｶﾞｲｼｬﾀﾞﾝｽﾅｳ",
         "0930",
         "0036",
+        " ",
         "251",
+        " ",
         "1",
         "7787950",
+        "",
       ],
       ...instructorList,
-      ["8", `${instructorList.length}`, String(totalSales), "9"],
+      ["8", `${instructorList.length}`, String(totalSales), ""],
+      ["9", ""],
     ];
   };
 
